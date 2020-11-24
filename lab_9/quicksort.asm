@@ -4,14 +4,14 @@ org 100h
 .data 
     initial_statement db "The array before sorting: $"
     final_statement db "The array after sorting is: $" 
-    arr db 7, 6, 3, 1, 4    ;The array to be sorted
+    arr db 56, 27, 36, 43, 60    ;The array to be sorted
     arr_length EQU 5   ;The number of elements in the array
     p DB ?
     j DB ?
     i DB ?
     l DB 0 
     h DB 4
-    
+    s DB ?
  
 ;macro to print a string    
 PRINT MACRO string           
@@ -29,7 +29,11 @@ PRINT ENDM
         CALL PRINT_ARRAY ;printing the elements of the array (before sorting)
         CALL quickSort
         end_quicksort:  ;when the quicksort function has ended.
-            ;print new line:
+            ;print carriage return:
+            mov ah, 2
+	        mov dl, 13
+	        int 21h
+	        ;print new line:
             mov ah, 2
 	        mov dl, 10
 	        int 21h
@@ -48,15 +52,47 @@ PRINT ENDM
         print_loop:
            mov bl, arr_length  ;store the array length in bl
            sub bl, cl  ;subtract the counter pointer from the bx register (array_length - cx)
-           mov ah, 02h ;the interrup method to print a digit
-           mov dl, arr[bx]
-           add dx, 30h ;adding 30h for the ASCII conversion
-           int 21h ;INTERRUPT
+           mov s, 0
+           xor ax, ax
+           mov al, arr[bx]
+           mov si, ax
+           mov di, 10
+           push_digits_to_stack:
+                add s, 1
+                xor dx, dx
+                ;mov al, arr[bx]
+                ;mov si, ax
+                mov ax, si
+                div di
+                push dx
+                mov si, ax
+                cmp si, 0
+                jne push_digits_to_stack
+           printing_from_stack:
+                cmp s, 0
+                    je end_of_printing
+                pop si
+                mov ah, 02h
+                mov dx, si
+                add dx, 30h
+                int 21h
+                dec s
+                jmp printing_from_stack
            
+           end_of_printing: 
+           mov al, arr_length
+           sub al, 1
+           cmp al, bl
+                je skip_comma 
            ;print comma:
            mov ah, 02h ;the interrup method to print a digit
            mov dl, 44 ;adding 30h for the ASCII conversion
-           int 21h ;INTERRUPT                                           
+           int 21h ;INTERRUPT
+           ;print space:
+           mov ah, 02h ;the interrup method to print a digit
+           mov dl, 32 ;adding 30h for the ASCII conversion
+           int 21h ;INTERRUPT
+           skip_comma:                                           
         loop print_loop
         RET     
     PRINT_ARRAY ENDP
