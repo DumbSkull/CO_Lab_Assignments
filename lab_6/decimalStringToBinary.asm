@@ -2,7 +2,7 @@
 
 .data
 
-    decimal_string db "63$"
+    decimal_string db "61$"
     output_text db "The binary equivalent is: $"
     
 .code
@@ -33,54 +33,44 @@
             jmp convert_string_to_int              
         break1:  
         
-        mov si, 0   ;si will now store the binary equivalent of the decimal 
-        mov cx, di
+        mov si, 0   ;si will now store the number of binary digits 
+        mov cx, di  ;cx initially stores the integer
         mov di, 1   ;10s multiple
         
         convert_decimal_to_binary:
-            cmp cx, 1   ;check if cx == 1
+            inc si  ;increment si by 1
+            cmp cx, 1   ;check if cx == 0 
                 je break2
             xor dx, dx  ;clear the remainder register
             mov ax, cx  ;move the value of cx to ax
             mov bx, 2
             div bx      ;divide ax by 2
             mov cx, ax
-            
-            ;multiplying remainder by di and adding 
-            mov ax, dx
-            mul di
-            add ax, si
-            mov si, ax
-                   
+            push dx     ;push the remainder to stack
+      
             ;multiplying di by 10
-            mov ax, di
+            mov ax, di  
             mov bx, 10
             mul bx
             mov di, ax
-            jmp convert_decimal_to_binary
+            jmp convert_decimal_to_binary  
+            
         break2:
-        
+        push cx     ;push the first digit (1) to the top of the stack
         mov bl, 1 
-        add bl, 30h
-        ;below block prints 1
-        mov ah, 02h
-        mov dl, bl
-        int 21h
+        add bl, 30h ;add 30h or 48 to convert to ascii
         
         print_binary_digits_in_reverse:
-            cmp si, 0       ;check if si==0
+            cmp si, 0   ;if si==0, then break
                 je break3
-            xor dx, dx
-            mov ax, si
-            mov bx, 10
-            div bx
-            mov si, ax
-            mov bl, dl
-            add bl, 30h
+            mov bx, 0
+            pop bx  ;pop from the stack and store to bx
+            add bx, 48  ;add 48 to convert to ASCII
             ;print the last digit: 
-            mov ah, 02h
+            mov ah, 02h     ;Interrup to print digit
             mov dl, bl
             int 21h
+            dec si      ;decrement si
             jmp print_binary_digits_in_reverse  
         break3:
                   
